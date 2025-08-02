@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineRate</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+    /* Black placeholder for all modal inputs */
+    #forgotEmail::placeholder,
+    #registerEmail::placeholder,
+    #registerUsername::placeholder,
+    #registerPassword::placeholder {
+        color: #111 !important;
+        opacity: 1;
+    }
+    </style>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="wrapper">
+        <form action="">
+            <h1>Login</h1>
+            <div class="input-box">
+                <input type="text" placeholder="Username" id="usernameInput" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                <input type="password" placeholder="Password" id="passwordInput" required>
+                <i class='bx bxs-lock-alt' ></i>
+            </div>
+            <div class="remember-forgot">
+                <label><input type="checkbox" id="rememberMe">Remember me</label>
+                <a href="#" id="forgotLink">Forgot Password</a>
+            </div>
+            <button type="submit" class="btn">Login</button>
+            <div class="register-link">
+                <p>Dont have an account? <a href="#" id="registerLink">Register</a></p>
+            </div>
+        </form>
+    </div>
+<!-- Forgot Password Modal (moved outside .wrapper for overlay) -->
+<!-- Register Modal -->
+<div id="registerModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="wrapper" style="background:rgba(30,30,30,0.85);padding:2rem 2.5rem;border-radius:10px;max-width:350px;width:90%;box-shadow:0 2px 16px #0003;position:relative;">
+        <button id="closeRegister" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#fff;">&times;</button>
+        <form id="registerForm" style="margin:0;">
+            <h1 style="font-size:1.5rem;color:#fff;text-align:center;margin-bottom:1.2rem;">Register</h1>
+            <div class="input-box" style="margin-bottom:1.2rem;">
+                <input type="text" id="registerUsername" placeholder="Username" required style="width:100%;background:rgba(255,255,255,0.85);color:#111;">
+                <i class='bx bxs-user' style="color:#111;"></i>
+            </div>
+            <div class="input-box" style="margin-bottom:1.2rem;">
+                <input type="password" id="registerPassword" placeholder="Password" required style="width:100%;background:rgba(255,255,255,0.85);color:#111;">
+                <i class='bx bxs-lock-alt' style="color:#111;"></i>
+            </div>
+            <button type="submit" class="btn" style="width:100%;">Register</button>
+        </form>
+        <div id="registerMsg" style="display:none;color:#fff;margin-top:10px;text-align:center;"></div>
+    </div>
+</div>
+<div id="forgotModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="wrapper" style="background:rgba(30,30,30,0.85);padding:2rem 2.5rem;border-radius:10px;max-width:350px;width:90%;box-shadow:0 2px 16px #0003;position:relative;">
+        <button id="closeForgot" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#fff;">&times;</button>
+        <form id="forgotForm" style="margin:0;">
+            <h1 style="font-size:1.5rem;color:#fff;text-align:center;margin-bottom:1.2rem;">Forgot Password</h1>
+            <div class="input-box" style="margin-bottom:1.2rem;">
+                <input type="email" id="forgotEmail" placeholder="Email address" required style="width:100%;background:rgba(255,255,255,0.85);color:#111;::placeholder{color:#111;}">
+                <i class='bx bxs-envelope' style="color:#111;"></i>
+            </div>
+            <button type="submit" class="btn" style="width:100%;">Send Reset Link</button>
+        </form>
+        <div id="forgotMsg" style="display:none;color:#fff;margin-top:10px;text-align:center;"></div>
+    </div>
+</div>
+    <script>
+        // Register modal logic
+        const registerLink = document.getElementById('registerLink');
+        const registerModal = document.getElementById('registerModal');
+        const closeRegister = document.getElementById('closeRegister');
+        const registerForm = document.getElementById('registerForm');
+        const registerMsg = document.getElementById('registerMsg');
+
+        registerLink.onclick = function(e) {
+            e.preventDefault();
+            registerModal.style.display = 'flex';
+            registerModal.style.alignItems = 'center';
+            registerModal.style.justifyContent = 'center';
+            registerMsg.style.display = 'none';
+            registerForm.style.display = '';
+            registerForm.reset();
+        };
+        closeRegister.onclick = function() {
+            registerModal.style.display = 'none';
+        };
+        registerForm.onsubmit = function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            // Save registration data to localStorage
+            localStorage.setItem('registered_username', username);
+            localStorage.setItem('registered_password', password);
+            // Also set login info for immediate login
+            localStorage.setItem('login_username', username);
+            localStorage.setItem('login_password', password);
+            registerMsg.textContent = 'Registration successful! Redirecting...';
+            registerMsg.style.display = 'block';
+            registerForm.style.display = 'none';
+            setTimeout(function() {
+                registerModal.style.display = 'none';
+                window.location.href = '../homepage/home_page.html';
+            }, 1200);
+        };
+        // Close modal on background click
+        registerModal.onclick = function(e) {
+            if (e.target === registerModal) registerModal.style.display = 'none';
+        };
+        // Prefill username if remembered
+        window.addEventListener('DOMContentLoaded', function() {
+            const remembered = localStorage.getItem('remembered_username');
+            if (remembered) {
+                document.getElementById('usernameInput').value = remembered;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const remember = document.getElementById('rememberMe').checked;
+            localStorage.setItem('login_username', username);
+            localStorage.setItem('login_password', password);
+            if (remember) {
+                localStorage.setItem('remembered_username', username);
+            } else {
+                localStorage.removeItem('remembered_username');
+            }
+            window.location.href = '../homepage/home_page.html';
+        });
+
+        // Forgot Password modal logic
+        const forgotLink = document.getElementById('forgotLink');
+        const forgotModal = document.getElementById('forgotModal');
+        const closeForgot = document.getElementById('closeForgot');
+        const forgotForm = document.getElementById('forgotForm');
+        const forgotMsg = document.getElementById('forgotMsg');
+
+        forgotLink.onclick = function(e) {
+            e.preventDefault();
+            forgotModal.style.display = 'flex';
+            forgotModal.style.alignItems = 'center';
+            forgotModal.style.justifyContent = 'center';
+            forgotMsg.style.display = 'none';
+            forgotForm.style.display = '';
+            forgotForm.reset();
+        };
+        closeForgot.onclick = function() {
+            forgotModal.style.display = 'none';
+        };
+        forgotForm.onsubmit = function(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value;
+            forgotMsg.textContent = 'Reset link is sent to ' + email;
+            forgotMsg.style.display = 'block';
+            forgotForm.style.display = 'none';
+        };
+        // Close modal on background click
+        forgotModal.onclick = function(e) {
+            if (e.target === forgotModal) forgotModal.style.display = 'none';
+        };
+    </script>
+</body>
+</html>

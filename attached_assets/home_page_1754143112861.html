@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineRate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style_hp.css">
+</head>
+<body class="bg-dark text-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent">
+        <div class="container-fluid justify-content-center">
+            <span class="navbar-brand fw-bold mx-auto text-center" style="font-size:2.5rem; letter-spacing:2px;">
+                CineRate
+            </span>
+            <span class="position-absolute end-0 me-4 d-flex align-items-center">
+                <img id="profilePicNav" src="profile_default.png" style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #fff;margin-right:8px;">
+                <a href="my_profile.html" class="btn btn-outline-light me-2" id="profileBtn">
+                    <i class="fa fa-user"></i> My Profile
+                </a>
+                <button class="btn btn-outline-danger" id="signOutBtn" type="button">
+                    <i class="fa fa-sign-out-alt"></i> Sign Out
+                </button>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <select id="genreSelect" class="form-select me-2 d-inline-block" style="width:auto;">
+                    <option selected value="all">All genres</option>
+                    <option value="Action">Action</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Sci-Fi">Sci-Fi</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Crime">Crime</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Sport">Sport</option>
+                    <option value="Comedy">Comedy</option>
+                </select>
+                <!-- Sort select can be added here if needed, but only one genre select should have the id -->
+            </div>
+        </div>
+        <div class="row" id="movieGrid"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="rateModal" tabindex="-1" aria-labelledby="rateModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="rateModalLabel">Rate Movie</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="star-container" class="mb-3"></div>
+            <textarea id="review-text" class="form-control mb-3" placeholder="Write your review..."></textarea>
+            <input type="hidden" id="current-movie-index">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="save-rating">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="profileModalLabel">My Profile</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Username:</strong> Guest</p>
+            <p><strong>Reviews:</strong> <span id="profile-reviews-count">0</span></p>
+            <p><strong>Favorite Genre:</strong> <span id="profile-fav-genre">-</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- <script src="java.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Movie data with genres
+        const movies = [
+            {
+                title: "Avatar",
+                year: 2009,
+                genres: ["Sci-Fi", "Adventure"],
+                poster_path: "/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
+                page: "avatar.html"
+            },
+            {
+                title: "Joker",
+                year: 2019,
+                genres: ["Crime", "Drama", "Thriller"],
+                poster_path: "/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
+                page: "joker.html"
+            },
+            {
+                title: "Fight Club",
+                year: 1999,
+                genres: ["Drama", "Thriller"],
+                poster_path: "/a26cQPRhJPX6GbWfQbvZdrrp9j9.jpg",
+                page: "fight_club.html"
+            },
+            {
+                title: "F1",
+                year: 2025,
+                genres: ["Drama", "Sport"],
+                poster_path: "/9PXZIUsSDh4alB80jheWX4fhZmy.jpg",
+                page: "f1.html"
+            },
+            {
+                title: "M3GAN 2.0",
+                year: 2025,
+                genres: ["Horror", "Sci-Fi", "Thriller"],
+                poster_path: "/oekamLQrwlJjRNmfaBE4llIvkir.jpg",
+                page: "megan_2_0.html"
+            },
+            {
+                title: "Avengers: Endgame",
+                year: 2019,
+                genres: ["Action", "Adventure", "Sci-Fi"],
+                poster_path: "/bR8ISy1O9XQxqiy0fQFw2BX72RQ.jpg",
+                page: "avengers_endgame.html"
+            }
+        ];
+
+        // Render movies
+        function renderMovies(filterGenre = "all") {
+            const row = document.getElementById('movieGrid');
+            row.innerHTML = '';
+            let filtered = movies;
+            if (filterGenre !== "all") {
+                filtered = movies.filter(m => m.genres.map(g => g.toLowerCase()).includes(filterGenre.toLowerCase()));
+            }
+            console.log('Filter:', filterGenre, 'Result:', filtered);
+            if (filtered.length === 0) {
+                row.innerHTML = `<div class='text-center text-secondary py-5'>No movies found for selected genre.</div>`;
+                return;
+            }
+            filtered.forEach(movie => {
+                row.innerHTML += `
+                <div class="col-md-3 mb-4">
+                    <div class="poster-card">
+                        <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" 
+                             class="img-fluid movie-poster" 
+                             alt="Movie poster"
+                             style="cursor:pointer;border-radius:10px;box-shadow:0 2px 8px #00000055;transition:box-shadow 0.2s,filter 0.2s;"
+                             data-page="${movie.page}">
+                    </div>
+                </div>
+                `;
+            });
+            // Poster click and hover
+            document.querySelectorAll('.movie-poster').forEach(img => {
+                img.onclick = function() {
+                    window.location.href = this.getAttribute('data-page');
+                };
+                img.onmouseover = function() {
+                    this.style.boxShadow = '0 0 0 4px #0dcaf0, 0 2px 16px #00000099';
+                    this.style.filter = 'brightness(1.15)';
+                };
+                img.onmouseout = function() {
+                    this.style.boxShadow = '0 2px 8px #00000055';
+                    this.style.filter = 'none';
+                };
+            });
+        }
+        // Initial render
+        renderMovies();
+        // Filter event
+        document.getElementById('genreSelect').addEventListener('change', function() {
+            renderMovies(this.value);
+        });
+    </script>
+    <script>
+        function renderStars(rating) {
+            const starContainer = document.getElementById('star-container');
+            starContainer.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                if (rating >= i) {
+                    starContainer.innerHTML += `<i class="fa-solid fa-star text-warning star-icon" data-value="${i}" style="font-size:2rem;cursor:pointer;"></i>`;
+                } else if (rating >= i - 0.5) {
+                    starContainer.innerHTML += `<i class="fa-solid fa-star-half-stroke text-warning star-icon" data-value="${i - 0.5}" style="font-size:2rem;cursor:pointer;"></i>`;
+                } else {
+                    starContainer.innerHTML += `<i class="fa-regular fa-star text-warning star-icon" data-value="${i}" style="font-size:2rem;cursor:pointer;"></i>`;
+                }
+            }
+            document.querySelectorAll('.star-icon').forEach(star => {
+                star.onclick = function() {
+                    selectedRating = parseFloat(this.getAttribute('data-value'));
+                    renderStars(selectedRating);
+                };
+            });
+        }
+
+        document.getElementById('profileBtn').onclick = function() {
+            // Example: count reviews from localStorage
+            let count = 0;
+            for (let key in localStorage) {
+                if (key.endsWith('_review')) {
+                    const review = JSON.parse(localStorage.getItem(key));
+                    if (review && review.text && review.text.trim() !== "") count++;
+                }
+            }
+            document.getElementById('profile-reviews-count').textContent = count;
+            // Example: set favorite genre (placeholder)
+            document.getElementById('profile-fav-genre').textContent = '-';
+            const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+            modal.show();
+        };
+
+        // Prikaz profilne slike u navbaru
+        const profilePicNav = document.getElementById('profilePicNav');
+        const savedPicNav = localStorage.getItem('profile_pic');
+        if (savedPicNav) profilePicNav.src = savedPicNav;
+
+        // Sign Out button logic
+        document.getElementById('signOutBtn').onclick = function() {
+            // Remove only login info, not reviews or profile pic
+            localStorage.removeItem('login_username');
+            localStorage.removeItem('login_password');
+            window.location.href = '../login/index.html';
+        };
+    </script>
+</body>
+</html>

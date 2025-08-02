@@ -1,0 +1,131 @@
+.star-half {
+    width: 2rem;
+    height: 2rem;
+    position: relative;
+    display: inline-block;
+}
+.star-left, .star-right {
+    height: 100%;
+    position: absolute;
+    top: 0;
+}
+.star-left {
+    left: 0;
+    width: 50%;
+}
+.star-right {
+    right: 0;
+    width: 50%;
+}
+.poster-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+.movie-poster {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+    transition: filter 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+.poster-card:hover .movie-poster {
+    filter: brightness(1.2) drop-shadow(0 0 10px #ffc107);
+    box-shadow: 0 0 20px #ffc107;
+}
+
+body.avatar-bg {
+    background: url('https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+body.avatar-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
+
+.trailer-fade {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    /* Za fade i lijevo/desno koristi: to right ili ellipse */
+}
+
+body.bg-dark {
+    background: linear-gradient(155deg, #181818 10%, #232526 100%);
+}
+
+body.joker-bg {
+    background: url('https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+body.joker-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
+
+body.fightclub-bg {
+    background: url('https://image.tmdb.org/t/p/w500/a26cQPRhJPX6GbWfQbvZdrrp9j9.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+body.fightclub-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
+
+body.f1-bg {
+    background: url('https://image.tmdb.org/t/p/w500/9PXZIUsSDh4alB80jheWX4fhZmy.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+body.f1-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
+
+body.megan-bg {
+    background: url('https://image.tmdb.org/t/p/w500/oekamLQrwlJjRNmfaBE4llIvkir.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+body.megan-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
+
+body.avengers-endgame-bg {
+    background: url('https://image.tmdb.org/t/p/w500/bR8ISy1O9XQxqiy0fQFw2BX72RQ.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+body.avengers-endgame-bg::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px) brightness(0.5);
+    z-index: -1;
+}
