@@ -5,7 +5,7 @@ class SocketService {
 
   connect() {
     const serverUrl = import.meta.env.PROD 
-      ? 'wss://your-production-domain.com' 
+  ? 'wss://cinerate-projekt.onrender.com' 
       : 'http://localhost:5000';
     
     this.socket = io(serverUrl, {
