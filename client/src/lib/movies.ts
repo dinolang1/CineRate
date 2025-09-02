@@ -41,7 +41,6 @@ export const fetchMovies = async (filters?: MovieFilters): Promise<Movie[]> => {
 
   let movies = await response.json();
 
-  // Sort movies
   if (filters?.sortBy) {
     movies.sort((a: Movie, b: Movie) => {
       switch (filters.sortBy) {
@@ -50,7 +49,7 @@ export const fetchMovies = async (filters?: MovieFilters): Promise<Movie[]> => {
         case "oldest":
           return a.year - b.year;
         case "rating":
-          return b.averageRating - a.averageRating;
+          return (b.averageRating || 0) - (a.averageRating || 0);
         case "title":
           return a.title.localeCompare(b.title);
         default:
@@ -103,6 +102,7 @@ export const createReview = async (reviewData: InsertReview): Promise<Review> =>
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: 'include',
     body: JSON.stringify(reviewData),
   });
 
@@ -120,6 +120,7 @@ export const updateReview = async (reviewId: string, updates: { rating?: number;
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: 'include',
     body: JSON.stringify(updates),
   });
 
@@ -134,6 +135,7 @@ export const updateReview = async (reviewId: string, updates: { rating?: number;
 export const deleteReview = async (reviewId: string): Promise<void> => {
   const response = await fetch(`/api/reviews/${reviewId}`, {
     method: "DELETE",
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -150,7 +152,7 @@ export const getMoviePosterUrl = (posterPath: string): string => {
 };
 
 export const formatRating = (rating: number): string => {
-  return (rating / 10).toFixed(1);
+  return (rating / 20).toFixed(1);
 };
 
 export const getYouTubeEmbedUrl = (url: string): string => {
@@ -158,7 +160,6 @@ export const getYouTubeEmbedUrl = (url: string): string => {
     return url;
   }
   
-  // Convert regular YouTube URLs to embed format
   const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
   if (videoId) {
     return `https://www.youtube.com/embed/${videoId}`;

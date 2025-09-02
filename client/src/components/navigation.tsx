@@ -1,29 +1,28 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Film, Home, Star, Search, User, Menu, X } from "lucide-react";
+import { Film, Home, Star, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authService } from "@/lib/auth";
 
 interface NavigationProps {
-  onSearch?: (query: string) => void;
   onAuthOpen?: () => void;
 }
 
-export function Navigation({ onSearch, onAuthOpen }: NavigationProps) {
+export function Navigation({ onAuthOpen }: NavigationProps) {
   const [location] = useLocation();
-  const [searchQuery, setSearchQuery] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
-  const authState = authService.getAuthState();
+  const [authState, setAuthState] = React.useState(authService.getAuthState());
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch) {
-      onSearch(searchQuery.trim());
-    }
-  };
+  // Slušaj promjene u auth state
+  React.useEffect(() => {
+    const unsubscribe = authService.onAuthChange(() => {
+      setAuthState(authService.getAuthState());
+    });
+    
+    return unsubscribe;
+  }, []);
 
   const handleLogout = () => {
     authService.logout();
@@ -78,32 +77,13 @@ export function Navigation({ onSearch, onAuthOpen }: NavigationProps) {
             <NavLinks />
           </div>
 
-          {/* Search and User Actions */}
+          {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="hidden md:flex relative">
-              <Input
-                type="text"
-                placeholder="Search movies..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 bg-gray-800 border-gray-600 text-white focus:ring-yellow-400 focus:border-yellow-400"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-400 hover:text-yellow-400"
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-            </form>
-
             {/* User Profile or Login */}
             {authState.isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <Link href="/profile">
-                  <Button variant="ghost" className="flex items-center space-x-2 text-gray-300 hover:text-yellow-400">
+                  <Button variant="ghost" className="flex items-center space-x-2 text-gray-300 hover:text-yellow-400 hover:bg-transparent">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={authState.user?.profilePicture || undefined} />
                       <AvatarFallback className="bg-yellow-400 text-black">
@@ -117,7 +97,7 @@ export function Navigation({ onSearch, onAuthOpen }: NavigationProps) {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-yellow-400"
+                  className="bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500 hover:border-yellow-500 hover:text-black"
                 >
                   Logout
                 </Button>
@@ -142,20 +122,6 @@ export function Navigation({ onSearch, onAuthOpen }: NavigationProps) {
               <SheetContent side="right" className="bg-gray-900 border-gray-700">
                 <div className="flex flex-col space-y-4 mt-8">
                   <NavLinks mobile={true} />
-                  
-                  {/* Mobile Search */}
-                  <form onSubmit={handleSearch} className="flex">
-                    <Input
-                      type="text"
-                      placeholder="Search movies..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-gray-800 border-gray-600 text-white"
-                    />
-                    <Button type="submit" size="sm" className="ml-2">
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  </form>
 
                   {!authState.isAuthenticated && (
                     <Button

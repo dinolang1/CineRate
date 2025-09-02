@@ -41,7 +41,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="bg-gray-900 flex items-center justify-center py-20">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
           <p className="text-gray-400 mb-4">Failed to load movies. Please try again later.</p>
@@ -52,7 +52,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -85,7 +85,12 @@ export default function Home() {
               Search
             </Button>
             {filters.search && (
-              <Button type="button" variant="outline" onClick={clearSearch}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={clearSearch}
+                className="border-gray-600 text-white bg-transparent hover:bg-transparent hover:border-yellow-400 hover:text-yellow-400"
+              >
                 Clear
               </Button>
             )}
@@ -176,7 +181,7 @@ export default function Home() {
                   setSearchInput("");
                 }}
                 variant="outline"
-                className="mt-4"
+                className="mt-4 border-gray-600 text-white bg-transparent hover:bg-transparent hover:border-yellow-400 hover:text-yellow-400"
               >
                 Clear all filters
               </Button>

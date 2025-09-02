@@ -11,6 +11,7 @@ export class AuthService {
     user: null,
     isAuthenticated: false,
   };
+  private listeners: (() => void)[] = [];
 
   private constructor() {
     this.loadAuthFromStorage();
@@ -24,14 +25,28 @@ export class AuthService {
   }
 
   private loadAuthFromStorage() {
-    const savedUser = localStorage.getItem("cineRate_user");
+    const savedUser = localStorage.getItem("cineRate_user") || sessionStorage.getItem("cineRate_user");
     if (savedUser) {
       try {
         this.authState.user = JSON.parse(savedUser);
         this.authState.isAuthenticated = true;
+        this.verifySession();
       } catch (error) {
-        localStorage.removeItem("cineRate_user");
+        this.clearAuthFromStorage();
       }
+    }
+  }
+
+  private async verifySession() {
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        this.logout();
+      }
+    } catch (error) {
+      this.logout();
     }
   }
 
@@ -54,6 +69,7 @@ export class AuthService {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: 'include',
       body: JSON.stringify(loginData),
     });
 
@@ -66,6 +82,7 @@ export class AuthService {
     this.authState.user = user;
     this.authState.isAuthenticated = true;
     this.saveAuthToStorage(user, loginData.rememberMe || false);
+    this.notifyListeners();
 
     return user;
   }
@@ -76,6 +93,7 @@ export class AuthService {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: 'include',
       body: JSON.stringify(userData),
     });
 
@@ -88,14 +106,24 @@ export class AuthService {
     this.authState.user = user;
     this.authState.isAuthenticated = true;
     this.saveAuthToStorage(user, false);
+    this.notifyListeners();
 
     return user;
   }
 
-  logout() {
+  async logout() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: 'include',
+      });
+    } catch (error) {
+    }
+    
     this.authState.user = null;
     this.authState.isAuthenticated = false;
     this.clearAuthFromStorage();
+    this.notifyListeners();
   }
 
   getAuthState(): AuthState {
@@ -108,6 +136,26 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this.authState.isAuthenticated;
+  }
+
+  updateUser(updatedUser: User) {
+    this.authState.user = updatedUser;
+    this.saveAuthToStorage(updatedUser, false);
+    this.notifyListeners();
+  }
+
+  onAuthChange(listener: () => void) {
+    this.listeners.push(listener);
+    return () => {
+      const index = this.listeners.indexOf(listener);
+      if (index > -1) {
+        this.listeners.splice(index, 1);
+      }
+    };
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener());
   }
 }
 

@@ -11,10 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
 import { fetchUserReviews, fetchMovies, deleteReview, getMoviePosterUrl } from "@/lib/movies";
+import { ProfileUpload } from "@/components/profile-upload";
 import { Movie, Review } from "@shared/schema";
+import { convertRatingFromStorage } from "@/lib/ratings";
 
 export default function Profile() {
   const [reviewFilter, setReviewFilter] = React.useState<"all" | "recent" | "highest" | "lowest">("all");
+  const [currentUser, setCurrentUser] = React.useState(authService.getAuthState().user);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const authState = authService.getAuthState();
@@ -69,12 +72,10 @@ export default function Profile() {
     return null;
   }
 
-  // Get movie data for reviews
   const getMovieForReview = (movieId: string): Movie | undefined => {
     return movies?.find(movie => movie.id === movieId);
   };
 
-  // Filter and sort reviews
   const filteredReviews = React.useMemo(() => {
     if (!reviews) return [];
 
@@ -82,7 +83,11 @@ export default function Profile() {
 
     switch (reviewFilter) {
       case "recent":
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        filtered.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
         break;
       case "highest":
         filtered.sort((a, b) => b.rating - a.rating);
@@ -91,13 +96,16 @@ export default function Profile() {
         filtered.sort((a, b) => a.rating - b.rating);
         break;
       default:
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        filtered.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
     }
 
     return filtered;
   }, [reviews, reviewFilter]);
 
-  // Calculate user stats
   const userStats = React.useMemo(() => {
     if (!reviews || reviews.length === 0) {
       return {
@@ -107,10 +115,9 @@ export default function Profile() {
       };
     }
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = reviews.reduce((sum, review) => sum + convertRatingFromStorage(review.rating), 0);
     const averageRating = totalRating / reviews.length;
 
-    // Calculate favorite genre based on reviewed movies
     const genreCounts: Record<string, number> = {};
     reviews.forEach(review => {
       const movie = getMovieForReview(review.movieId);
@@ -131,11 +138,11 @@ export default function Profile() {
   }, [reviews, movies]);
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-6">
           <Link href="/">
-            <Button variant="ghost" className="mb-4 text-gray-300 hover:text-yellow-400">
+            <Button variant="ghost" className="mb-4 text-gray-300 hover:text-yellow-400 bg-transparent hover:bg-transparent">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Movies
             </Button>
@@ -149,14 +156,25 @@ export default function Profile() {
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-6">
                 <div className="text-center mb-6">
-                  <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={authState.user.profilePicture || undefined} />
-                    <AvatarFallback className="bg-yellow-400 text-black text-2xl">
-                      {authState.user.username.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h2 className="text-xl font-semibold text-white">{authState.user.username}</h2>
-                  <p className="text-gray-400 text-sm">{authState.user.email}</p>
+                  <ProfileUpload 
+                    currentImageUrl={currentUser?.profilePicture || undefined}
+                    onImageUploaded={(imageUrl) => {
+                      if (currentUser) {
+                        const updatedUser = { 
+                          ...currentUser, 
+                          profilePicture: imageUrl 
+                        };
+                        authService.updateUser(updatedUser);
+                        setCurrentUser(updatedUser);
+                        toast({
+                          title: "Profile Updated",
+                          description: "Your profile picture has been updated!",
+                        });
+                      }
+                    }}
+                  />
+                  <h2 className="text-xl font-semibold text-white mt-4">{currentUser?.username}</h2>
+                  <p className="text-gray-400 text-sm">{currentUser?.email}</p>
                 </div>
                 
                 <div className="space-y-4 text-sm">
@@ -167,21 +185,12 @@ export default function Profile() {
                   <div className="flex justify-between">
                     <span className="text-gray-400">Average Rating:</span>
                     <span className="text-yellow-400 font-semibold">
-                      {userStats.averageRating > 0 ? userStats.averageRating : "-"}
+                      {userStats.averageRating > 0 ? `${userStats.averageRating}/5` : "-"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Favorite Genre:</span>
                     <span className="text-yellow-400 font-semibold">{userStats.favoriteGenre}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Member Since:</span>
-                    <span className="text-yellow-400 font-semibold">
-                      {new Date(authState.user.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        year: "numeric"
-                      })}
-                    </span>
                   </div>
                 </div>
                 
@@ -258,13 +267,13 @@ export default function Profile() {
                                 <div className="flex items-center gap-2 text-sm text-gray-400">
                                   <div className="flex items-center text-yellow-400">
                                     <Star className="w-3 h-3 mr-1 fill-current" />
-                                    <span>{review.rating}/10</span>
+                                    <span>{convertRatingFromStorage(review.rating).toFixed(1)}/5</span>
                                   </div>
                                   <span>•</span>
                                   <div className="flex items-center">
                                     <Calendar className="w-3 h-3 mr-1" />
                                     <span>
-                                      {new Date(review.createdAt).toLocaleDateString()}
+                                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "N/A"}
                                     </span>
                                   </div>
                                 </div>

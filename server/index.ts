@@ -1,10 +1,52 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Environment variables
+const PORT = process.env.PORT || 5000;
+const SESSION_SECRET = process.env.SESSION_SECRET || "your-secret-key-here";
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Extend express session types
+declare module "express-session" {
+  interface SessionData {
+    userId?: string;
+    user?: {
+      id: string;
+      username: string;
+      email: string;
+      profilePicture?: string;
+    };
+  }
+}
+
 const app = express();
+
+// CORS setup
+app.use(cors({
+  origin: NODE_ENV === 'production' ? 'your-production-domain.com' : 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  },
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -60,12 +102,12 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
+  const port = parseInt(PORT.toString(), 10);
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`🚀 CineRate server running on port ${port} in ${NODE_ENV} mode`);
   });
 })();

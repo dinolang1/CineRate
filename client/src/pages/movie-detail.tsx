@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { StarRating } from "@/components/ui/star-rating";
+import { AuthModal } from "@/components/auth-modal";
 import { authService } from "@/lib/auth";
 import { Link } from "wouter";
 import {
@@ -22,12 +23,17 @@ import {
   updateReview,
   deleteReview,
   getMoviePosterUrl,
-  formatRating,
   getYouTubeEmbedUrl,
 } from "@/lib/movies";
+import { 
+  convertRatingToStorage, 
+  convertRatingFromStorage, 
+  convertMovieRating, 
+  formatRating 
+} from "@/lib/ratings";
 
 const reviewSchema = z.object({
-  rating: z.number().int().min(1).max(10),
+  rating: z.number().min(1).max(50),
   reviewText: z.string().optional(),
 });
 
@@ -37,9 +43,19 @@ export default function MovieDetail() {
   const [, params] = useRoute("/movie/:id");
   const movieId = params?.id;
   const [isEditing, setIsEditing] = React.useState(false);
+  const [authModalOpen, setAuthModalOpen] = React.useState(false);
+  const [authState, setAuthState] = React.useState(authService.getAuthState());
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const authState = authService.getAuthState();
+
+  // Listen for auth changes
+  React.useEffect(() => {
+    const unsubscribe = authService.onAuthChange(() => {
+      setAuthState(authService.getAuthState());
+    });
+    
+    return unsubscribe;
+  }, []);
 
   const { data: movie, isLoading: movieLoading, error: movieError } = useQuery({
     queryKey: ["/api/movies", movieId],
@@ -56,7 +72,7 @@ export default function MovieDetail() {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
-      rating: existingReview?.rating || 1,
+      rating: existingReview?.rating || convertRatingToStorage(1),
       reviewText: existingReview?.reviewText || "",
     },
   });
@@ -173,7 +189,7 @@ export default function MovieDetail() {
 
   if (movieError) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="bg-gray-900 flex items-center justify-center py-20">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Movie not found</h2>
           <p className="text-gray-400 mb-4">The movie you're looking for doesn't exist.</p>
@@ -187,7 +203,7 @@ export default function MovieDetail() {
 
   if (movieLoading) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="bg-gray-900">
         <div className="container mx-auto px-4 py-8">
           <Skeleton className="h-8 w-32 mb-8 bg-gray-800" />
           <div className="grid lg:grid-cols-3 gap-8">
@@ -206,7 +222,7 @@ export default function MovieDetail() {
   if (!movie) return null;
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="bg-gray-900">
       {/* Hero Section with Movie Background */}
       <div className="relative h-screen">
         <div 
@@ -217,7 +233,7 @@ export default function MovieDetail() {
         
         <div className="relative z-10 container mx-auto px-4 pt-20">
           <Link href="/">
-            <Button variant="ghost" className="mb-6 text-gray-300 hover:text-yellow-400">
+            <Button variant="ghost" className="mb-6 text-gray-300 hover:text-yellow-400 bg-transparent hover:bg-transparent">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Movies
             </Button>
@@ -250,14 +266,14 @@ export default function MovieDetail() {
                       <span>{movie.duration}min</span>
                     </div>
                   )}
-                  {movie.averageRating > 0 && (
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 mr-2 text-yellow-400" />
-                      <span className="text-xl font-semibold text-yellow-400">
-                        {formatRating(movie.averageRating)}
-                      </span>
-                      <span className="text-sm ml-1">/10</span>
-                      <span className="text-sm ml-2 text-gray-400">
+                  {movie.averageRating && movie.averageRating > 0 && (
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                        <span className="text-xl font-semibold text-yellow-400">{convertMovieRating(movie.averageRating).toFixed(1)}</span>
+                        <span className="text-sm text-gray-400">/5</span>
+                      </div>
+                      <span className="text-sm text-gray-400">
                         ({movie.reviewCount} review{movie.reviewCount !== 1 ? "s" : ""})
                       </span>
                     </div>
@@ -355,10 +371,11 @@ export default function MovieDetail() {
                     {existingReview && !isEditing ? (
                       <div className="space-y-4">
                         <div className="flex items-center space-x-2">
-                          <StarRating rating={existingReview.rating} readonly />
-                          <span className="text-yellow-400 font-semibold">
-                            {existingReview.rating}/10
-                          </span>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-yellow-400 font-medium">{convertRatingFromStorage(existingReview.rating).toFixed(1)}</span>
+                            <span className="text-sm text-gray-400">/5</span>
+                          </div>
                         </div>
                         {existingReview.reviewText && (
                           <div>
@@ -375,34 +392,11 @@ export default function MovieDetail() {
                           <label className="block text-gray-300 mb-2">Your Rating</label>
                           <div className="flex items-center space-x-4">
                             <StarRating
-                              rating={form.watch("rating")}
-                              onRatingChange={(rating) => form.setValue("rating", rating)}
+                              rating={convertRatingFromStorage(form.watch("rating"))}
+                              onRatingChange={(rating) => form.setValue("rating", convertRatingToStorage(rating))}
+                              allowHalfStars={true}
+                              showValue={true}
                             />
-                            <Select
-                              value={form.watch("rating").toString()}
-                              onValueChange={(value) => form.setValue("rating", parseInt(value))}
-                            >
-                              <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-gray-700 border-gray-600">
-                                {Array.from({ length: 10 }, (_, i) => i + 1).map((rating) => (
-                                  <SelectItem
-                                    key={rating}
-                                    value={rating.toString()}
-                                    className="text-white hover:bg-gray-600"
-                                  >
-                                    {rating} - {
-                                      rating <= 2 ? "Terrible" :
-                                      rating <= 4 ? "Poor" :
-                                      rating <= 6 ? "Fair" :
-                                      rating <= 8 ? "Good" :
-                                      rating === 9 ? "Great" : "Masterpiece"
-                                    }
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
                           </div>
                         </div>
                         
@@ -447,7 +441,10 @@ export default function MovieDetail() {
                 <Card className="bg-gray-800 border-gray-700">
                   <CardContent className="text-center py-8">
                     <p className="text-gray-400 mb-4">Sign in to rate and review this movie</p>
-                    <Button className="bg-yellow-400 text-black hover:bg-yellow-500">
+                    <Button 
+                      onClick={() => setAuthModalOpen(true)}
+                      className="bg-yellow-400 text-black hover:bg-yellow-500"
+                    >
                       Sign In
                     </Button>
                   </CardContent>
@@ -457,6 +454,15 @@ export default function MovieDetail() {
           </div>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => {
+          setAuthModalOpen(false);
+          // Auth state će se automatski ažurirati putem listener-a
+        }}
+      />
     </div>
   );
 }

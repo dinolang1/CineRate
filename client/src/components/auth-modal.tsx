@@ -39,12 +39,16 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
 
+  const rememberedUsername = React.useMemo(() => {
+    return localStorage.getItem("cineRate_rememberedUsername") || "";
+  }, []);
+
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      username: rememberedUsername,
       password: "",
-      rememberMe: false,
+      rememberMe: !!rememberedUsername,
     },
   });
 
@@ -58,15 +62,38 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     },
   });
 
+  React.useEffect(() => {
+    if (isOpen) {
+      const rememberedUsername = localStorage.getItem("cineRate_rememberedUsername") || "";
+      loginForm.reset({
+        username: rememberedUsername,
+        password: "",
+        rememberMe: !!rememberedUsername,
+      });
+      registerForm.reset({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+    }
+  }, [isOpen, mode, loginForm, registerForm]);
+
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
       await authService.login(data);
+      
+      if (data.rememberMe) {
+        localStorage.setItem("cineRate_rememberedUsername", data.username);
+      } else {
+        localStorage.removeItem("cineRate_rememberedUsername");
+      }
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      onClose();
       onSuccess?.();
     } catch (error) {
       toast({
@@ -88,7 +115,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         title: "Account created!",
         description: "Welcome to CineRate. You have been automatically signed in.",
       });
-      onClose();
       onSuccess?.();
     } catch (error) {
       toast({
@@ -152,7 +178,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-400 hover:text-white"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -235,7 +261,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-400 hover:text-white"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

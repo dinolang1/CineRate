@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -84,7 +86,7 @@
 
   .movie-poster-hover:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 30px hsla(45, 100%, 51%, 0.5);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
   }
 
   .star-rating button {
@@ -115,5 +117,3 @@
     border-radius: 0.75rem;
   }
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');

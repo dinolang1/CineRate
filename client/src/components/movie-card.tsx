@@ -3,7 +3,8 @@ import { Star, Calendar, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Movie } from "@shared/schema";
-import { getMoviePosterUrl, formatRating } from "@/lib/movies";
+import { getMoviePosterUrl } from "@/lib/movies";
+import { convertMovieRating } from "@/lib/ratings";
 import { Link } from "wouter";
 
 interface MovieCardProps {
@@ -21,7 +22,6 @@ export function MovieCard({ movie }: MovieCardProps) {
             className="w-full h-80 object-cover transition-all duration-300 group-hover:scale-105"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
         
         <CardContent className="p-4">
@@ -42,12 +42,10 @@ export function MovieCard({ movie }: MovieCardProps) {
               </div>
             )}
             
-            {movie.averageRating > 0 && (
+            {movie.averageRating && movie.averageRating > 0 && (
               <div className="flex items-center space-x-1">
                 <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                <span className="text-yellow-400 font-medium">
-                  {formatRating(movie.averageRating)}
-                </span>
+                <span className="text-yellow-400 font-medium">{convertMovieRating(movie.averageRating).toFixed(1)}</span>
               </div>
             )}
           </div>

@@ -31,7 +31,7 @@ export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   movieId: varchar("movie_id").notNull().references(() => movies.id),
-  rating: integer("rating").notNull(), // 1-10
+  rating: integer("rating").notNull(), // 1-50 (representing 0.5-5.0 in increments of 0.5)
   reviewText: text("review_text"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -53,6 +53,8 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  rating: z.number().min(1).max(50), // 1-50 (representing 0.5-5.0)
 });
 
 export const loginSchema = z.object({
