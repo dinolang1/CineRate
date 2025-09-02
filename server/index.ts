@@ -27,7 +27,7 @@ const app = express();
 
 // CORS setup
 app.use(cors({
-  origin: NODE_ENV === 'production' ? 'your-production-domain.com' : 'http://localhost:5173',
+  origin: NODE_ENV === 'production' ? 'https://cinerate-projekt.onrender.com' : 'http://localhost:5173',
   credentials: true
 }));
 
